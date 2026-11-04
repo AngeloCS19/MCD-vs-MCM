@@ -11,8 +11,8 @@
 /* Layout: una columna en celular; controles a la izquierda y diagrama a la derecha desde 760px */
 :root{
   --bg:#f6f8fb; --panel:#ffffff; --fg:#1c2433; --muted:#5d6878; --line:#d9dfe8;
-  --a:#2f6fd6; --a-soft:rgba(47,111,214,.14);
-  --b:#d2453b; --b-soft:rgba(210,69,59,.14);
+  --a:#2b63c4; --a-soft:rgba(43,99,196,.14);
+  --b:#c0392b; --b-soft:rgba(192,57,43,.14);
   --ok:#2d8a4e;
   --display:"Literata",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
@@ -22,7 +22,14 @@
 :root[data-theme="dark"]{
   --bg:#121722; --panel:#1a2130; --fg:#e6ebf3; --muted:#9aa5b6; --line:#2c3547;
   --a:#6ea1f2; --a-soft:rgba(110,161,242,.18); --b:#f07a70; --b-soft:rgba(240,122,112,.18); --ok:#5cc489; color-scheme:dark}
-body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body)}
+body{background:var(--bg);color:var(--fg);font:1rem/1.5 var(--body)}
+:root[data-size="large"]{font-size:125%}
+:root[data-size="large"] svg text{font-size:21px}
+.tools{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tools button{font:600 .95rem var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);
+  border-radius:999px;padding:8px 16px;min-height:44px;cursor:pointer}
+.tools button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+:focus-visible{outline:3px solid var(--a);outline-offset:2px}
 main{max-width:1000px;margin:0 auto;padding-block:24px 40px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   display:grid;gap:20px}
@@ -50,6 +57,10 @@ svg text{fill:var(--fg);font-family:var(--mono)}
 
 <main>
   <h1>Comparación MCM y MCD</h1>
+  <div class="tools" aria-label="Accesibilidad">
+    <button id="size" type="button" aria-pressed="false">Letra grande</button>
+    <button id="theme" type="button"></button>
+  </div>
   <div class="layout">
     <section class="panel" aria-label="Controles">
       <div class="slider">
@@ -118,6 +129,24 @@ for (const k of ["a", "b"]) {
   $(k + "N").addEventListener("input", () => { $(k).value = $(k + "N").value; update(); });
 }
 update();
+
+// Accesibilidad: tema y tamaño de letra, recordados en este navegador
+const root = document.documentElement;
+const load = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const save = (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch {} };
+const isDark = () => root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+const paintTools = () => {
+  $("theme").textContent = isDark() ? "Cambiar a modo claro" : "Cambiar a modo oscuro";
+  $("size").setAttribute("aria-pressed", root.dataset.size === "large");
+};
+if (load("theme")) root.dataset.theme = load("theme");
+if (load("size")) root.dataset.size = load("size");
+$("theme").addEventListener("click", () => { root.dataset.theme = isDark() ? "light" : "dark"; save("theme", root.dataset.theme); paintTools(); });
+$("size").addEventListener("click", () => {
+  if (root.dataset.size) delete root.dataset.size; else root.dataset.size = "large";
+  save("size", root.dataset.size); paintTools();
+});
+paintTools();
 </script>
 </body>
 </html>
