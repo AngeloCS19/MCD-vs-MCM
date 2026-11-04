@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Comparación MCM y MCD</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: una columna en celular; controles a la izquierda y diagrama a la derecha desde 760px */
+:root{
+  --bg:#f6f8fb; --panel:#ffffff; --fg:#1c2433; --muted:#5d6878; --line:#d9dfe8;
+  --a:#2f6fd6; --a-soft:rgba(47,111,214,.14);
+  --b:#d2453b; --b-soft:rgba(210,69,59,.14);
+  --ok:#2d8a4e;
+  --display:"Literata",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121722; --panel:#1a2130; --fg:#e6ebf3; --muted:#9aa5b6; --line:#2c3547;
+  --a:#6ea1f2; --a-soft:rgba(110,161,242,.18); --b:#f07a70; --b-soft:rgba(240,122,112,.18); --ok:#5cc489; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121722; --panel:#1a2130; --fg:#e6ebf3; --muted:#9aa5b6; --line:#2c3547;
+  --a:#6ea1f2; --a-soft:rgba(110,161,242,.18); --b:#f07a70; --b-soft:rgba(240,122,112,.18); --ok:#5cc489; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body)}
+main{max-width:1000px;margin:0 auto;padding-block:24px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:grid;gap:20px}
+h1{font:600 clamp(1.5rem,4vw,2.2rem)/1.15 var(--display);margin:0;text-wrap:balance;text-align:center}
+.layout{display:grid;gap:20px}
+@media (min-width:760px){.layout{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:start}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:16px;min-width:0}
+.slider{display:grid;gap:6px}
+.slider .row{display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.slider input[type=number]{font:500 1.1rem var(--mono);font-variant-numeric:tabular-nums;width:6ch;text-align:right;
+  background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+input[type=range]{width:100%;height:32px}
+#a{accent-color:var(--a)} #b{accent-color:var(--b)}
+.lbl-a{color:var(--a)} .lbl-b{color:var(--b)}
+.facts{display:grid;gap:8px;margin:0}
+.facts div{display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:space-between;border-top:1px solid var(--line);padding-top:8px}
+.facts dt{color:var(--muted)} .facts dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.check{font-family:var(--mono);color:var(--ok)}
+svg{width:100%;height:auto;display:block}
+svg text{fill:var(--fg);font-family:var(--mono)}
+.note{color:var(--muted);font-size:.9rem;margin:0}
+</style>
+</head>
+<body>
+
+<main>
+  <h1>Comparación MCM y MCD</h1>
+  <div class="layout">
+    <section class="panel" aria-label="Controles">
+      <div class="slider">
+        <div class="row"><label for="a" class="lbl-a">a</label><input id="aN" type="number" min="1" max="999" value="9" aria-label="Valor exacto de a"></div>
+        <input id="a" type="range" min="1" max="200" value="9" aria-label="Deslizador de a">
+      </div>
+      <div class="slider">
+        <div class="row"><label for="b" class="lbl-b">b</label><input id="bN" type="number" min="1" max="999" value="155" aria-label="Valor exacto de b"></div>
+        <input id="b" type="range" min="1" max="200" value="155" aria-label="Deslizador de b">
+      </div>
+      <dl class="facts">
+        <div><dt>a es</dt><dd id="fa"></dd></div>
+        <div><dt>b es</dt><dd id="fb"></dd></div>
+        <div><dt>Descomposición prima de a</dt><dd id="pa"></dd></div>
+        <div><dt>Descomposición prima de b</dt><dd id="pb"></dd></div>
+        <div><dt>Divisores de a</dt><dd id="da"></dd></div>
+        <div><dt>Divisores de b</dt><dd id="db"></dd></div>
+        <div><dt>MCD(a, b)</dt><dd id="mcd"></dd></div>
+        <div><dt>MCM(a, b)</dt><dd id="mcm"></dd></div>
+      </dl>
+    </section>
+    <section class="panel" aria-label="Diagrama de Venn">
+      <!-- viewBox: el dibujo usa coordenadas propias y se escala al ancho de la pantalla -->
+      <svg viewBox="0 0 400 270" role="img" aria-label="Diagrama de Venn de factores primos">
+        <circle cx="150" cy="135" r="110" fill="var(--a-soft)" stroke="var(--a)" stroke-width="2.5"/>
+        <circle cx="250" cy="135" r="110" fill="var(--b-soft)" stroke="var(--b)" stroke-width="2.5"/>
+        <text x="62" y="40" font-size="20" style="fill:var(--a)">a</text>
+        <text x="330" y="40" font-size="20" style="fill:var(--b)">b</text>
+        <text id="vA" x="95" y="140" text-anchor="middle" font-size="17"></text>
+        <text id="vD" x="200" y="140" text-anchor="middle" font-size="17"></text>
+        <text id="vB" x="305" y="140" text-anchor="middle" font-size="17"></text>
+      </svg>
+      <p class="note">Centro: factores del MCD. Todo el diagrama: factores del MCM.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+const gcd = (x, y) => y ? gcd(y, x % y) : x;
+const factors = n => { const f = []; for (let p = 2; n > 1; p++) while (n % p === 0) { f.push(p); n /= p; } return f; };
+// {3, 3} se muestra como 3²: más legible en pantallas chicas
+const sup = {2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷"};
+const pretty = n => { const c = {}; factors(n).forEach(p => c[p] = (c[p] || 0) + 1);
+  const s = Object.entries(c).map(([p, k]) => k > 1 ? p + (sup[k] || "^" + k) : p).join("·"); return s || "1"; };
+const divisors = n => [...Array(n).keys()].map(i => i + 1).filter(d => n % d === 0);
+const kind = n => n === 1 ? "ni primo ni compuesto" : factors(n).length === 1 ? "primo" : "compuesto";
+
+console.assert(gcd(9, 155) === 1 && gcd(12, 18) === 6, "gcd");
+console.assert(pretty(9) === "3²" && pretty(155) === "5·31" && pretty(1) === "1", "pretty");
+
+const $ = id => document.getElementById(id);
+function update() {
+  const a = +$("aN").value, b = +$("bN").value;
+  const ok = n => Number.isInteger(n) && n >= 1 && n <= 999;
+  if (!ok(a) || !ok(b)) return; // mientras escribe un número inválido, se queda lo último válido
+  const d = gcd(a, b), m = a * b / d;
+  $("fa").textContent = kind(a); $("fb").textContent = kind(b);
+  $("pa").textContent = `${a} = ${pretty(a)}`; $("pb").textContent = `${b} = ${pretty(b)}`;
+  $("da").textContent = `{${divisors(a).join(", ")}}`; $("db").textContent = `{${divisors(b).join(", ")}}`;
+  $("mcd").textContent = d; $("mcm").textContent = m;
+  $("vA").textContent = pretty(a / d); $("vD").textContent = pretty(d); $("vB").textContent = pretty(b / d);
+}
+// deslizador y casilla numérica se copian el valor entre sí
+for (const k of ["a", "b"]) {
+  $(k).addEventListener("input", () => { $(k + "N").value = $(k).value; update(); });
+  $(k + "N").addEventListener("input", () => { $(k).value = $(k + "N").value; update(); });
+}
+update();
+</script>
+</body>
+</html>
